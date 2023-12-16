@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageTk
 import requests
 from transformers import AutoModelForImageClassification, AutoFeatureExtractor, pipeline
 import torch
@@ -28,23 +28,28 @@ def get_recipe(url):
 
     for i in range(10):
         if df['Name'][i] == model.config.id2label[predicted_class_idx]:
-            return model.config.id2label[predicted_class_idx], df['Ingredients'][i]
+            return model.config.id2label[predicted_class_idx], df['Ingredients'][i], image
         
 def run_function():
     link = link_entry.get()
+    image_label.config(image=None)
+    image_label.image = None
 
     def fetch_recipe():
-        name, recipe = get_recipe(link)
+        name, recipe, image = get_recipe(link)
+        tk_image = ImageTk.PhotoImage(image)
+        image_label.config(image=tk_image)
+        image_label.image = tk_image
         recipe_text = f"Recipe for {name} is: {''.join(recipe)}"
         result_label.config(text=recipe_text)
         fetch_button.config(state=tk.NORMAL)
 
     fetch_button.config(state=tk.DISABLED)
-    result_label.config(text="Fetching...", foreground="gray")  # Set text color to gray
+    result_label.config(text="Fetching...", foreground="gray")
 
     threading.Thread(target=fetch_recipe).start()
 
-root = ThemedTk(theme="arc")  # Use a ttkthemes theme, e.g., "arc"
+root = ThemedTk(theme="arc")
 root.title("Recipe Fetcher")
 
 link_label = ttk.Label(root, text="Enter Recipe Link:")
@@ -56,7 +61,10 @@ link_entry.grid(row=0, column=1, pady=10, padx=10, sticky="w")
 fetch_button = ttk.Button(root, text="Fetch Recipe", command=run_function)
 fetch_button.grid(row=1, column=0, columnspan=2, pady=10)
 
+image_label = ttk.Label(root, text="")
+image_label.grid(row=2, column=0, columnspan=2, pady=10, padx=10)
+
 result_label = ttk.Label(root, text="", wraplength=500, justify="left")
-result_label.grid(row=2, column=0, columnspan=2, pady=10, padx=10)
+result_label.grid(row=3, column=0, columnspan=2, pady=10, padx=10)
 
 root.mainloop()
